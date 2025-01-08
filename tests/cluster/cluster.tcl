@@ -1,8 +1,10 @@
 # Cluster-specific test functions.
 #
-# Copyright (C) 2014 Salvatore Sanfilippo antirez@gmail.com
-# This software is released under the BSD License. See the COPYING file for
-# more information.
+# Copyright (C) 2014-Present, Redis Ltd.
+# All Rights reserved.
+#
+# Licensed under your choice of the Redis Source Available License 2.0
+# (RSALv2) or the Server Side Public License v1 (SSPLv1).
 
 # Track cluster configuration as created by create_cluster below
 set ::cluster_master_nodes 0
@@ -19,8 +21,7 @@ proc get_cluster_nodes {id {status "*"}} {
         set args [split $l]
         set node [dict create \
             id [lindex $args 0] \
-            addr [lindex [split [lindex $args 1] ,] 0] \
-            shard-id [lindex [split [lindex [split [lindex $args 1] ,] 2] = ] 1]\
+            addr [lindex $args 1] \
             flags [split [lindex $args 2] ,] \
             slaveof [lindex $args 3] \
             ping_sent [lindex $args 4] \
