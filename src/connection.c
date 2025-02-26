@@ -57,7 +57,7 @@ int connTypeRegister(ConnectionType *ct) {
     return C_OK;
 }
 
-int connTypeInitialize() {
+int connTypeInitialize(void) {
     /* currently socket connection type is necessary  */
     serverAssert(RedisRegisterConnectionTypeSocket() == C_OK);
 
@@ -88,7 +88,7 @@ ConnectionType *connectionByType(const char *typename) {
 }
 
 /* Cache TCP connection type, query it by string once */
-ConnectionType *connectionTypeTcp() {
+ConnectionType *connectionTypeTcp(void) {
     static ConnectionType *ct_tcp = NULL;
 
     if (ct_tcp != NULL)
@@ -101,7 +101,7 @@ ConnectionType *connectionTypeTcp() {
 }
 
 /* Cache TLS connection type, query it by string once */
-ConnectionType *connectionTypeTls() {
+ConnectionType *connectionTypeTls(void) {
     static ConnectionType *ct_tls = NULL;
     static int cached = 0;
 
@@ -116,7 +116,7 @@ ConnectionType *connectionTypeTls() {
 }
 
 /* Cache Unix connection type, query it by string once */
-ConnectionType *connectionTypeUnix() {
+ConnectionType *connectionTypeUnix(void) {
     static ConnectionType *ct_unix = NULL;
 
     if (ct_unix != NULL)
@@ -141,7 +141,7 @@ int connectionIndexByType(const char *typename) {
     return -1;
 }
 
-void connTypeCleanupAll() {
+void connTypeCleanupAll(void) {
     ConnectionType *ct;
     int type;
 
@@ -156,14 +156,14 @@ void connTypeCleanupAll() {
 }
 
 /* walk all the connection types until has pending data */
-int connTypeHasPendingData(void) {
+int connTypeHasPendingData(struct aeEventLoop *el) {
     ConnectionType *ct;
     int type;
     int ret = 0;
 
     for (type = 0; type < CONN_TYPE_MAX; type++) {
         ct = connTypes[type];
-        if (ct && ct->has_pending_data && (ret = ct->has_pending_data())) {
+        if (ct && ct->has_pending_data && (ret = ct->has_pending_data(el))) {
             return ret;
         }
     }
@@ -172,7 +172,7 @@ int connTypeHasPendingData(void) {
 }
 
 /* walk all the connection types and process pending data for each connection type */
-int connTypeProcessPendingData(void) {
+int connTypeProcessPendingData(struct aeEventLoop *el) {
     ConnectionType *ct;
     int type;
     int ret = 0;
@@ -180,7 +180,7 @@ int connTypeProcessPendingData(void) {
     for (type = 0; type < CONN_TYPE_MAX; type++) {
         ct = connTypes[type];
         if (ct && ct->process_pending_data) {
-            ret += ct->process_pending_data();
+            ret += ct->process_pending_data(el);
         }
     }
 

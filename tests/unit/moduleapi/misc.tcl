@@ -1,6 +1,6 @@
 set testmodule [file normalize tests/modules/misc.so]
 
-start_server {tags {"modules"}} {
+start_server {overrides {save {900 1}} tags {"modules"}} {
     r module load $testmodule
 
     test {test RM_Call} {
@@ -147,6 +147,19 @@ start_server {tags {"modules"}} {
         assert_equal "PONG" [$rd_trk ping]
         $rd_trk close
     }
+
+    test {publish to self inside rm_call} {
+        r hello 3
+        r subscribe foo
+
+        # published message comes after the response of the command that issued it.
+        assert_equal [r test.rm_call publish foo bar] {1}
+        assert_equal [r read] {message foo bar}
+
+        r unsubscribe foo
+        r hello 2
+        set _ ""
+    } {} {resp3}
 
     test {test module get/set client name by id api} {
         catch { r test.getname } e
@@ -480,6 +493,14 @@ start_server {tags {"modules"}} {
         # server is writable again
         r set x y
     } {OK}
+
+    test "malloc API" {
+        assert_equal {OK} [r test.malloc_api 0]
+    }
+
+    test "Cluster keyslot" {
+        assert_equal 12182 [r test.keyslot foo]
+    }
 }
 
 start_server {tags {"modules"}} {
